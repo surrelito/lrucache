@@ -1,49 +1,43 @@
 #include <iostream>
 #include "DisplayMessageEndpoint.h"
+#include "LRUCACHE.h"
 #include <Windows.h>
+#include "LinkedList.h"
 
-std::string GetDestinationFrom(int destinationId)
+std::string GetDestinationFrom(int destinationId, LRUCACHE *LruCache)
 {
-	DisplayMessageDestinationService service;
-	return service.GetDestinationName(destinationId);
-	//This call is really slow!!!
-
-	//Uppgift: Skapa en LRU cache...
-	//Du får dock spara högst 10 st för det finns så lite minne i displayen
-
-	//1. Skapa en C-only linkedlist - varför? - den ska användas i en c-only device senare.. 
-	//struct Node
-	//{
-	//	int id;
-	//	char *txt;
-	//	struct Node *next;
-	//};
-	//kom ihåg att malloc och free på både noder och char *
-
-	//2. Anropa denna härifrån sas
-	// if linkedlist_get(id) == NULL
-	//{
-	//fetch from remote service.GetDestinationName(destinationId)
-	//	Add to linked list (FRONT)
-	//	Ta bort sista om > 10!
-	//}
-	//else if linkedlist_get(id) != NULL
-	//	Move it to FRONT!
-	//
+	std::string destination = LruCache->Get(destinationId);
+	if (destination.size() != NULL) {
+		return destination;
+	}
+	else {
+		DisplayMessageDestinationService service;
+		destination = service.GetDestinationName(destinationId);
+		LruCache->Add(destinationId, destination);
+		return destination;
+	}
 }
-
-void main()
+int main()
 {
-
+	int count{};
 	SetConsoleOutputCP(1252);
-
+	LRUCACHE *lrucache = new LRUCACHE;
 	DisplayMessageEndpoint *endPoint = new DisplayMessageEndpoint();
+
 	while (true)
 	{
 		DisplayMessageEndpoint::DisplayEntry nextDisplayMessage = endPoint->GetDisplayMessage();
-		std::cout << nextDisplayMessage.time << "   " << nextDisplayMessage.newTime 
-			<< "      " << nextDisplayMessage.track << "  " << GetDestinationFrom(nextDisplayMessage.destinationId)
+		std::cout << nextDisplayMessage.time << "   " << nextDisplayMessage.newTime
+			<< "      " << nextDisplayMessage.track << "  " << GetDestinationFrom(nextDisplayMessage.destinationId, lrucache)
 			<< std::endl;
-	}
+		count++;
+		if (count > 1) {
+			std::cout << std::endl;
+			std::cout << "*********LRUCACHE*********" << std::endl;
+			lrucache->Print();
+			std::cout << "*********LRUCACHE*********" << std::endl;
+			std::cout << std::endl;
+		}
 
+	}
 }

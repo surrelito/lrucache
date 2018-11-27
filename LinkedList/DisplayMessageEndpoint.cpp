@@ -50,12 +50,12 @@ int DisplayMessageEndpoint::RandomizeDestination()
 		sum += max - i;
 		if (sum > rand) return i;
 	}
-	return sizeof(destinations)-1;
+	return destinations.size()-1;
 }
 
 std::string DisplayMessageDestinationService::GetDestinationName(int id)
 {
-	Sleep(3000);
+	//Sleep(1000);
 	return destinations[id];
 }
 
